@@ -1,227 +1,182 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { Badge } from "@/components/ui/badge"
-import {
-  Calendar,
-  Users,
-  Target,
-  TrendingUp,
-  Clock,
-  CheckCircle,
-  AlertCircle,
-  DollarSign,
-  Activity,
-} from "lucide-react"
-import { MRFilterHeader } from "@/components/mr-filter-header"
+"use client"
 
-export function DashboardOverview() {
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
+import { Button } from "@/components/ui/button"
+import { Users, TrendingUp, Calendar, Target, AlertTriangle, CheckCircle, Clock, MapPin } from "lucide-react"
+
+interface DashboardOverviewProps {
+  onSelectMR?: (mrName: string) => void
+}
+
+export function DashboardOverview({ onSelectMR }: DashboardOverviewProps) {
+  const kpiData = [
+    {
+      title: "Total MRs",
+      value: "24",
+      change: "+2",
+      changeType: "positive",
+      icon: Users,
+    },
+    {
+      title: "Monthly Target",
+      value: "₹2.4M",
+      change: "87%",
+      changeType: "positive",
+      icon: Target,
+    },
+    {
+      title: "Visits Completed",
+      value: "1,247",
+      change: "+12%",
+      changeType: "positive",
+      icon: CheckCircle,
+    },
+    {
+      title: "Pending Reviews",
+      value: "23",
+      change: "-5",
+      changeType: "negative",
+      icon: Clock,
+    },
+  ]
+
+  const mrPerformance = [
+    { name: "Rajesh Kumar", territory: "North Zone", visits: 45, target: 50, achievement: 90 },
+    { name: "Priya Sharma", territory: "South Zone", visits: 42, target: 45, achievement: 93 },
+    { name: "Amit Patel", territory: "West Zone", visits: 38, target: 48, achievement: 79 },
+    { name: "Sneha Reddy", territory: "East Zone", visits: 41, target: 44, achievement: 93 },
+    { name: "Vikram Singh", territory: "Central Zone", visits: 35, target: 46, achievement: 76 },
+  ]
+
+  const alerts = [
+    { type: "critical", message: "Amit Patel - 3 consecutive missed visits", time: "2 hours ago" },
+    { type: "warning", message: "North Zone - Below target by 15%", time: "4 hours ago" },
+    { type: "info", message: "New territory assignment pending approval", time: "1 day ago" },
+  ]
+
   return (
-    <div className="p-6 space-y-6">
-      <MRFilterHeader />
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
-          <p className="text-gray-600 mt-1">Monthly Tour Planning & Weekly Revision System</p>
+          <p className="text-gray-600">Territory management and performance insights</p>
         </div>
-        <div className="flex items-center space-x-2">
-          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-            <CheckCircle className="h-3 w-3 mr-1" />
-            Week 3 Active
-          </Badge>
-          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-            December 2024
-          </Badge>
+        <div className="flex space-x-3">
+          <Button variant="outline">
+            <Calendar className="h-4 w-4 mr-2" />
+            This Month
+          </Button>
+          <Button>
+            <TrendingUp className="h-4 w-4 mr-2" />
+            Generate Report
+          </Button>
         </div>
       </div>
 
-      {/* Key Metrics */}
+      {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Plan Adherence</CardTitle>
-            <Target className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">87%</div>
-            <Progress value={87} className="mt-2" />
-            <p className="text-xs text-gray-600 mt-2">+5% from last week</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Revenue Achievement</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">₹2.4M</div>
-            <Progress value={78} className="mt-2" />
-            <p className="text-xs text-gray-600 mt-2">78% of monthly target</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Customer Coverage</CardTitle>
-            <Users className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">342</div>
-            <Progress value={92} className="mt-2" />
-            <p className="text-xs text-gray-600 mt-2">92% of planned visits</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Quality Score</CardTitle>
-            <Activity className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">8.4</div>
-            <Progress value={84} className="mt-2" />
-            <p className="text-xs text-gray-600 mt-2">Average visit quality</p>
-          </CardContent>
-        </Card>
+        {kpiData.map((kpi, index) => {
+          const Icon = kpi.icon
+          return (
+            <Card key={index}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">{kpi.title}</CardTitle>
+                <Icon className="h-4 w-4 text-gray-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-gray-900">{kpi.value}</div>
+                <p className="text-xs text-gray-600 flex items-center mt-1">
+                  <span
+                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      kpi.changeType === "positive" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {kpi.change}
+                  </span>
+                  <span className="ml-2">from last month</span>
+                </p>
+              </CardContent>
+            </Card>
+          )
+        })}
       </div>
 
-      {/* Current Week Status */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* MR Performance */}
+        <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Calendar className="h-5 w-5 text-blue-600" />
-              <span>Week 3 Progress</span>
-            </CardTitle>
+            <CardTitle>MR Performance Overview</CardTitle>
+            <CardDescription>Monthly visit completion and target achievement</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Monday</span>
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
-                Completed
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Tuesday</span>
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
-                Completed
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Wednesday</span>
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                In Progress
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Thursday</span>
-              <Badge variant="outline">Planned</Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Friday</span>
-              <Badge variant="outline">Planned</Badge>
+          <CardContent>
+            <div className="space-y-4">
+              {mrPerformance.map((mr, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                  onClick={() => onSelectMR?.(mr.name)}
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                      <Users className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">{mr.name}</p>
+                      <p className="text-sm text-gray-600 flex items-center">
+                        <MapPin className="h-3 w-3 mr-1" />
+                        {mr.territory}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="flex items-center space-x-4">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {mr.visits}/{mr.target} visits
+                        </p>
+                        <Progress value={mr.achievement} className="w-20 h-2 mt-1" />
+                      </div>
+                      <Badge
+                        variant={mr.achievement >= 90 ? "default" : mr.achievement >= 80 ? "secondary" : "destructive"}
+                      >
+                        {mr.achievement}%
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
 
+        {/* Alerts & Notifications */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <AlertCircle className="h-5 w-5 text-orange-600" />
-              <span>Action Items</span>
-            </CardTitle>
+            <CardTitle>Alerts & Notifications</CardTitle>
+            <CardDescription>Recent system alerts and updates</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 bg-red-500 rounded-full mt-2"></div>
-              <div>
-                <p className="text-sm font-medium">High Priority Customer</p>
-                <p className="text-xs text-gray-600">ABC Corp - Missed last 2 visits</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
-              <div>
-                <p className="text-sm font-medium">Route Optimization</p>
-                <p className="text-xs text-gray-600">Thursday route needs adjustment</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2"></div>
-              <div>
-                <p className="text-sm font-medium">Weekly Review</p>
-                <p className="text-xs text-gray-600">Due Sunday for Week 4 planning</p>
-              </div>
+          <CardContent>
+            <div className="space-y-4">
+              {alerts.map((alert, index) => (
+                <div key={index} className="flex items-start space-x-3 p-3 border rounded-lg">
+                  <div className="flex-shrink-0">
+                    {alert.type === "critical" && <AlertTriangle className="h-5 w-5 text-red-500" />}
+                    {alert.type === "warning" && <AlertTriangle className="h-5 w-5 text-yellow-500" />}
+                    {alert.type === "info" && <CheckCircle className="h-5 w-5 text-blue-500" />}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">{alert.message}</p>
+                    <p className="text-xs text-gray-500 mt-1">{alert.time}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Monthly Progress Timeline */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <TrendingUp className="h-5 w-5 text-green-600" />
-            <span>Monthly Progress Timeline</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center justify-center w-8 h-8 bg-green-100 rounded-full">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Week 1 - Completed</span>
-                  <span className="text-sm text-gray-600">95% Achievement</span>
-                </div>
-                <Progress value={95} className="mt-1" />
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center justify-center w-8 h-8 bg-green-100 rounded-full">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Week 2 - Completed</span>
-                  <span className="text-sm text-gray-600">88% Achievement</span>
-                </div>
-                <Progress value={88} className="mt-1" />
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full">
-                <Clock className="h-4 w-4 text-blue-600" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Week 3 - In Progress</span>
-                  <span className="text-sm text-gray-600">60% Complete</span>
-                </div>
-                <Progress value={60} className="mt-1" />
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center justify-center w-8 h-8 bg-gray-100 rounded-full">
-                <Calendar className="h-4 w-4 text-gray-600" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Week 4 - Planned</span>
-                  <span className="text-sm text-gray-600">Pending</span>
-                </div>
-                <Progress value={0} className="mt-1" />
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }
