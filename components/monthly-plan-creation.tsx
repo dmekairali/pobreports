@@ -1,6 +1,6 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
@@ -22,16 +22,18 @@ import {
 } from "lucide-react"
 import { MRFilterHeader } from "@/components/mr-filter-header"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { AIMonthlyPlanner } from "@/components/ai-monthly-planner"
 
 export function MonthlyPlanCreation() {
   return (
     <div className="p-6 space-y-6">
       <MRFilterHeader />
+
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Monthly Planning</h1>
-          <p className="text-gray-600">Create and manage monthly tour plans</p>
+          <p className="text-gray-600">Create and manage monthly tour plans with AI assistance</p>
         </div>
         <Button>
           <Plus className="h-4 w-4 mr-2" />
@@ -39,33 +41,11 @@ export function MonthlyPlanCreation() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>January 2024 - Rajesh Kumar</CardTitle>
-          <CardDescription>North Zone Territory Plan</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-7 gap-4">
-            {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
-              <div key={day} className="border rounded-lg p-3 min-h-[120px]">
-                <div className="font-medium text-sm mb-2">{day}</div>
-                {day === 15 && (
-                  <div className="space-y-1">
-                    <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Dr. Sharma - 9:00 AM</div>
-                    <div className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">City Hospital - 2:00 PM</div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Tabs defaultValue="analysis" className="w-full space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="analysis" className="flex items-center space-x-2">
+      <Tabs defaultValue="ai-planner" className="w-full space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="ai-planner" className="flex items-center space-x-2">
             <Brain className="h-4 w-4" />
-            <span>AI Analysis</span>
+            <span>AI Planner</span>
           </TabsTrigger>
           <TabsTrigger value="calendar" className="flex items-center space-x-2">
             <Calendar className="h-4 w-4" />
@@ -75,7 +55,15 @@ export function MonthlyPlanCreation() {
             <Target className="h-4 w-4" />
             <span>Plan Overview</span>
           </TabsTrigger>
+          <TabsTrigger value="analysis" className="flex items-center space-x-2">
+            <TrendingUp className="h-4 w-4" />
+            <span>Performance Analysis</span>
+          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="ai-planner" className="space-y-6">
+          <AIMonthlyPlanner />
+        </TabsContent>
 
         <TabsContent value="calendar" className="space-y-6">
           {/* Calendar Header */}
@@ -454,53 +442,7 @@ export function MonthlyPlanCreation() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="analysis" className="space-y-6">
-          {/* Move all the existing AI Analysis content here */}
-          {/* AI Analysis Status */}
-          <Card className="border-blue-200 bg-blue-50">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-blue-800">
-                <Brain className="h-5 w-5" />
-                <span>AI Territory Analysis</span>
-                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                  In Progress
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Customer Tier Analysis</span>
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                  </div>
-                  <Progress value={100} className="h-2" />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Performance Metrics</span>
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                  </div>
-                  <Progress value={100} className="h-2" />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Seasonal Trends</span>
-                    <Clock className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <Progress value={75} className="h-2" />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Churn Risk Assessment</span>
-                    <Clock className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <Progress value={45} className="h-2" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
+        <TabsContent value="overview" className="space-y-6">
           {/* Territory Insights */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card>
@@ -756,261 +698,51 @@ export function MonthlyPlanCreation() {
           </div>
         </TabsContent>
 
-        <TabsContent value="overview" className="space-y-6">
-          {/* Move the existing Territory Insights, Weekly Breakdown, Route Optimization content here */}
-          {/* Territory Insights */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Users className="h-5 w-5 text-blue-600" />
-                  <span>Customer Insights</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Tier A Customers</span>
-                    <Badge className="bg-green-100 text-green-800">24</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Tier B Customers</span>
-                    <Badge className="bg-blue-100 text-blue-800">67</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Tier C Customers</span>
-                    <Badge className="bg-gray-100 text-gray-800">143</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">High Churn Risk</span>
-                    <Badge variant="destructive">12</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <TrendingUp className="h-5 w-5 text-green-600" />
-                  <span>Performance Trends</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Avg. Visit Quality</span>
-                    <span className="font-semibold text-green-600">8.2/10</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Territory Efficiency</span>
-                    <span className="font-semibold text-blue-600">87%</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Revenue Growth</span>
-                    <span className="font-semibold text-green-600">+12%</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Customer Satisfaction</span>
-                    <span className="font-semibold text-blue-600">4.6/5</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Target className="h-5 w-5 text-purple-600" />
-                  <span>January Targets</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Revenue Target</span>
-                    <span className="font-semibold text-purple-600">₹3.2M</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Total Visits</span>
-                    <span className="font-semibold text-blue-600">420</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">New Customers</span>
-                    <span className="font-semibold text-green-600">15</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Quality Score</span>
-                    <span className="font-semibold text-orange-600">8.5+</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Weekly Breakdown */}
-          <Card>
+        <TabsContent value="analysis" className="space-y-6">
+          {/* AI Analysis Status */}
+          <Card className="border-blue-200 bg-blue-50">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Calendar className="h-5 w-5 text-blue-600" />
-                <span>Proposed Weekly Breakdown</span>
+              <CardTitle className="flex items-center space-x-2 text-blue-800">
+                <Brain className="h-5 w-5" />
+                <span>AI Territory Analysis</span>
+                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                  In Progress
+                </Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold">Week 1</h3>
-                    <Badge variant="outline">Jan 1-7</Badge>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Customer Tier Analysis</span>
+                    <CheckCircle className="h-4 w-4 text-green-600" />
                   </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Planned Visits:</span>
-                      <span className="font-medium">98</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Revenue Target:</span>
-                      <span className="font-medium">₹750K</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Focus Areas:</span>
-                      <span className="font-medium">Tier A</span>
-                    </div>
-                  </div>
+                  <Progress value={100} className="h-2" />
                 </div>
-
-                <div className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold">Week 2</h3>
-                    <Badge variant="outline">Jan 8-14</Badge>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Performance Metrics</span>
+                    <CheckCircle className="h-4 w-4 text-green-600" />
                   </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Planned Visits:</span>
-                      <span className="font-medium">105</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Revenue Target:</span>
-                      <span className="font-medium">₹820K</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Focus Areas:</span>
-                      <span className="font-medium">Mixed</span>
-                    </div>
-                  </div>
+                  <Progress value={100} className="h-2" />
                 </div>
-
-                <div className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold">Week 3</h3>
-                    <Badge variant="outline">Jan 15-21</Badge>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Seasonal Trends</span>
+                    <Clock className="h-4 w-4 text-blue-600" />
                   </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Planned Visits:</span>
-                      <span className="font-medium">112</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Revenue Target:</span>
-                      <span className="font-medium">₹890K</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Focus Areas:</span>
-                      <span className="font-medium">Tier B</span>
-                    </div>
-                  </div>
+                  <Progress value={75} className="h-2" />
                 </div>
-
-                <div className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold">Week 4</h3>
-                    <Badge variant="outline">Jan 22-31</Badge>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Churn Risk Assessment</span>
+                    <Clock className="h-4 w-4 text-blue-600" />
                   </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Planned Visits:</span>
-                      <span className="font-medium">105</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Revenue Target:</span>
-                      <span className="font-medium">₹740K</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Focus Areas:</span>
-                      <span className="font-medium">Recovery</span>
-                    </div>
-                  </div>
+                  <Progress value={45} className="h-2" />
                 </div>
               </div>
             </CardContent>
           </Card>
-
-          {/* Route Optimization */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Route className="h-5 w-5 text-green-600" />
-                  <span>Route Optimization</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                  <div>
-                    <p className="font-medium text-green-800">Optimized Routes</p>
-                    <p className="text-sm text-green-600">15% efficiency improvement</p>
-                  </div>
-                  <Zap className="h-8 w-8 text-green-600" />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Total Distance:</span>
-                    <span className="font-medium">2,340 km</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Travel Time:</span>
-                    <span className="font-medium">78 hours</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Fuel Cost:</span>
-                    <span className="font-medium">₹18,500</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <DollarSign className="h-5 w-5 text-blue-600" />
-                  <span>Revenue Projections</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                  <div>
-                    <p className="font-medium text-blue-800">Projected Revenue</p>
-                    <p className="text-sm text-blue-600">Based on historical data</p>
-                  </div>
-                  <TrendingUp className="h-8 w-8 text-blue-600" />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Conservative:</span>
-                    <span className="font-medium">₹2.8M</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Expected:</span>
-                    <span className="font-medium">₹3.2M</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Optimistic:</span>
-                    <span className="font-medium">₹3.6M</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
         </TabsContent>
       </Tabs>
     </div>
