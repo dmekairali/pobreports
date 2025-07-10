@@ -1,14 +1,41 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { MRFilterHeader } from "@/components/mr-filter-header"
 import { MRSelectionModal } from "@/components/mr-selection-modal"
-import { User, Calendar, Target, TrendingUp, Clock, Activity, CheckCircle, AlertTriangle } from "lucide-react"
+import {
+  User,
+  Calendar,
+  Target,
+  TrendingUp,
+  Clock,
+  Activity,
+  CheckCircle,
+  AlertTriangle,
+  ArrowLeft,
+} from "lucide-react"
+import { Button } from "@/components/ui/button"
 
-export function MRDashboard() {
+interface MRDashboardProps {
+  mrName: string
+  onBack: () => void
+}
+
+export function MRDashboard({ mrName, onBack }: MRDashboardProps) {
   return (
     <div className="p-6 space-y-6">
+      <div className="flex items-center space-x-4">
+        <Button variant="outline" onClick={onBack}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Dashboard
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">{mrName} Dashboard</h1>
+          <p className="text-gray-600">Individual performance and activity overview</p>
+        </div>
+      </div>
+
       <MRFilterHeader />
 
       {/* MR Selection Panel */}
@@ -25,75 +52,83 @@ export function MRDashboard() {
       </Card>
 
       {/* Individual MR Performance Dashboard */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="border-l-4 border-l-blue-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Monthly Achievement</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-2">
-              <div className="text-2xl font-bold text-blue-600">87%</div>
-              <div className="flex items-center text-green-600">
-                <TrendingUp className="h-4 w-4 mr-1" />
-                <span className="text-sm">+5%</span>
-              </div>
-            </div>
-            <Progress value={87} className="mt-2" />
-            <p className="text-xs text-gray-600 mt-1">Target: 85%</p>
-          </CardContent>
-        </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Individual Performance</CardTitle>
+          <CardDescription>Detailed metrics for {mrName}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="border-l-4 border-l-blue-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Monthly Achievement</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center space-x-2">
+                  <div className="text-2xl font-bold text-blue-600">87%</div>
+                  <div className="flex items-center text-green-600">
+                    <TrendingUp className="h-4 w-4 mr-1" />
+                    <span className="text-sm">+5%</span>
+                  </div>
+                </div>
+                <Progress value={87} className="mt-2" />
+                <p className="text-xs text-gray-600 mt-1">Target: 85%</p>
+              </CardContent>
+            </Card>
 
-        <Card className="border-l-4 border-l-green-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Revenue Generated</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-2">
-              <div className="text-2xl font-bold text-green-600">₹2.4M</div>
-              <div className="flex items-center text-red-600">
-                <TrendingUp className="h-4 w-4 mr-1" />
-                <span className="text-sm">78%</span>
-              </div>
-            </div>
-            <Progress value={78} className="mt-2" />
-            <p className="text-xs text-gray-600 mt-1">Target: ₹3.1M</p>
-          </CardContent>
-        </Card>
+            <Card className="border-l-4 border-l-green-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Revenue Generated</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center space-x-2">
+                  <div className="text-2xl font-bold text-green-600">₹2.4M</div>
+                  <div className="flex items-center text-red-600">
+                    <TrendingUp className="h-4 w-4 mr-1" />
+                    <span className="text-sm">78%</span>
+                  </div>
+                </div>
+                <Progress value={78} className="mt-2" />
+                <p className="text-xs text-gray-600 mt-1">Target: ₹3.1M</p>
+              </CardContent>
+            </Card>
 
-        <Card className="border-l-4 border-l-purple-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Customer Visits</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-2">
-              <div className="text-2xl font-bold text-purple-600">342</div>
-              <div className="flex items-center text-green-600">
-                <TrendingUp className="h-4 w-4 mr-1" />
-                <span className="text-sm">+12</span>
-              </div>
-            </div>
-            <Progress value={92} className="mt-2" />
-            <p className="text-xs text-gray-600 mt-1">Planned: 372</p>
-          </CardContent>
-        </Card>
+            <Card className="border-l-4 border-l-purple-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Customer Visits</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center space-x-2">
+                  <div className="text-2xl font-bold text-purple-600">342</div>
+                  <div className="flex items-center text-green-600">
+                    <TrendingUp className="h-4 w-4 mr-1" />
+                    <span className="text-sm">+12</span>
+                  </div>
+                </div>
+                <Progress value={92} className="mt-2" />
+                <p className="text-xs text-gray-600 mt-1">Planned: 372</p>
+              </CardContent>
+            </Card>
 
-        <Card className="border-l-4 border-l-orange-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Quality Score</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-2">
-              <div className="text-2xl font-bold text-orange-600">8.4</div>
-              <div className="flex items-center text-green-600">
-                <TrendingUp className="h-4 w-4 mr-1" />
-                <span className="text-sm">+0.3</span>
-              </div>
-            </div>
-            <Progress value={84} className="mt-2" />
-            <p className="text-xs text-gray-600 mt-1">Target: 8.0</p>
-          </CardContent>
-        </Card>
-      </div>
+            <Card className="border-l-4 border-l-orange-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Quality Score</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center space-x-2">
+                  <div className="text-2xl font-bold text-orange-600">8.4</div>
+                  <div className="flex items-center text-green-600">
+                    <TrendingUp className="h-4 w-4 mr-1" />
+                    <span className="text-sm">+0.3</span>
+                  </div>
+                </div>
+                <Progress value={84} className="mt-2" />
+                <p className="text-xs text-gray-600 mt-1">Target: 8.0</p>
+              </CardContent>
+            </Card>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Detailed MR Analytics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
