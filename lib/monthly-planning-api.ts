@@ -107,7 +107,8 @@ export class MonthlyPlanningAPI {
     try {
       console.log("🚀 Generating monthly plan for:", request.mrName)
 
-      const response = await fetch(`${this.baseUrl}/monthly-plan-persistentV2`, {
+      // Updated to use the direct openai route
+      const response = await fetch(`${this.baseUrl}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
