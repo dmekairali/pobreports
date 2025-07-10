@@ -540,5 +540,5 @@ export function EmergencyTerritoryManagement() {
         </Tabs>
       </Card>
     </div>
-  )\
+  )
 }
