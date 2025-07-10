@@ -277,8 +277,9 @@ export function EmergencyTerritoryManagement() {
                       </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="monitoring" className="space-y-6">
