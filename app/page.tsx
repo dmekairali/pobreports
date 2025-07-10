@@ -14,36 +14,39 @@ import { NBDPerformance } from "@/components/nbd-performance"
 
 export default function TourPlanningSystem() {
   const [activeView, setActiveView] = useState("dashboard")
+  const [selectedMR, setSelectedMR] = useState<string | null>(null)
 
-  const renderActiveView = () => {
+  const renderContent = () => {
+    if (selectedMR) {
+      return <MRDashboard mrName={selectedMR} onBack={() => setSelectedMR(null)} />
+    }
+
     switch (activeView) {
       case "dashboard":
-        return <DashboardOverview />
-      case "mr-dashboard":
-        return <MRDashboard />
+        return <DashboardOverview onSelectMR={setSelectedMR} />
       case "monthly-plan":
         return <MonthlyPlanCreation />
       case "weekly-revision":
         return <WeeklyRevision />
-      case "analytics":
+      case "performance":
         return <PerformanceAnalytics />
-      case "emergency":
-        return <EmergencyTerritoryManagement />
-      case "visit-quality":
-        return <VisitQualityAnalysis />
-      case "nbd-performance":
-        return <NBDPerformance />
       case "reports":
         return <Reports />
+      case "emergency":
+        return <EmergencyTerritoryManagement />
+      case "quality":
+        return <VisitQualityAnalysis />
+      case "nbd":
+        return <NBDPerformance />
       default:
-        return <DashboardOverview />
+        return <DashboardOverview onSelectMR={setSelectedMR} />
     }
   }
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar activeView={activeView} setActiveView={setActiveView} />
-      <main className="flex-1 overflow-auto">{renderActiveView()}</main>
+      <Sidebar activeView={activeView} onViewChange={setActiveView} />
+      <main className="flex-1 overflow-auto">{renderContent()}</main>
     </div>
   )
 }
