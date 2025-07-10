@@ -1,11 +1,10 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { MRFilterHeader } from "@/components/mr-filter-header"
 import {
   TrendingUp,
   Users,
@@ -20,106 +19,93 @@ import {
   MapPin,
   Phone,
   Mail,
-  Plus,
 } from "lucide-react"
 
 export function NBDPerformance() {
   return (
-    <div className="p-6 space-y-6">
-      <MRFilterHeader />
-
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">NBD Performance Dashboard</h1>
-          <p className="text-gray-600 mt-1">New Business Development tracking and performance analytics</p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-            <TrendingUp className="h-3 w-3 mr-1" />
-            +15% This Month
-          </Badge>
-          <Button variant="outline">
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Analytics
-          </Button>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            New Prospect
-          </Button>
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">NBD Performance</h1>
+        <p className="text-gray-600">New Business Development tracking and analytics</p>
       </div>
 
-      {/* NBD Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="border-l-4 border-l-green-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">New Customers</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-2">
-              <div className="text-2xl font-bold text-green-600">12</div>
-              <div className="flex items-center text-green-600">
-                <TrendingUp className="h-4 w-4 mr-1" />
-                <span className="text-sm">+3</span>
-              </div>
-            </div>
-            <Progress value={80} className="mt-2" />
-            <p className="text-xs text-gray-600 mt-1">Target: 15 this month</p>
-          </CardContent>
-        </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>NBD Metrics</CardTitle>
+          <CardDescription>New business development performance tracking</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="border-l-4 border-l-green-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">New Customers</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center space-x-2">
+                  <div className="text-2xl font-bold text-green-600">12</div>
+                  <div className="flex items-center text-green-600">
+                    <TrendingUp className="h-4 w-4 mr-1" />
+                    <span className="text-sm">+3</span>
+                  </div>
+                </div>
+                <Progress value={80} className="mt-2" />
+                <p className="text-xs text-gray-600 mt-1">Target: 15 this month</p>
+              </CardContent>
+            </Card>
 
-        <Card className="border-l-4 border-l-blue-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Pipeline Value</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-2">
-              <div className="text-2xl font-bold text-blue-600">₹1.8M</div>
-              <div className="flex items-center text-blue-600">
-                <DollarSign className="h-4 w-4 mr-1" />
-                <span className="text-sm">+22%</span>
-              </div>
-            </div>
-            <Progress value={72} className="mt-2" />
-            <p className="text-xs text-gray-600 mt-1">Target: ₹2.5M</p>
-          </CardContent>
-        </Card>
+            <Card className="border-l-4 border-l-blue-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Pipeline Value</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center space-x-2">
+                  <div className="text-2xl font-bold text-blue-600">₹1.8M</div>
+                  <div className="flex items-center text-blue-600">
+                    <DollarSign className="h-4 w-4 mr-1" />
+                    <span className="text-sm">+22%</span>
+                  </div>
+                </div>
+                <Progress value={72} className="mt-2" />
+                <p className="text-xs text-gray-600 mt-1">Target: ₹2.5M</p>
+              </CardContent>
+            </Card>
 
-        <Card className="border-l-4 border-l-purple-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Conversion Rate</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-2">
-              <div className="text-2xl font-bold text-purple-600">24%</div>
-              <div className="flex items-center text-green-600">
-                <TrendingUp className="h-4 w-4 mr-1" />
-                <span className="text-sm">+4%</span>
-              </div>
-            </div>
-            <Progress value={24} className="mt-2" />
-            <p className="text-xs text-gray-600 mt-1">Industry avg: 18%</p>
-          </CardContent>
-        </Card>
+            <Card className="border-l-4 border-l-purple-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Conversion Rate</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center space-x-2">
+                  <div className="text-2xl font-bold text-purple-600">24%</div>
+                  <div className="flex items-center text-green-600">
+                    <TrendingUp className="h-4 w-4 mr-1" />
+                    <span className="text-sm">+4%</span>
+                  </div>
+                </div>
+                <Progress value={24} className="mt-2" />
+                <p className="text-xs text-gray-600 mt-1">Industry avg: 18%</p>
+              </CardContent>
+            </Card>
 
-        <Card className="border-l-4 border-l-orange-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Avg. Deal Size</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-2">
-              <div className="text-2xl font-bold text-orange-600">₹150K</div>
-              <div className="flex items-center text-green-600">
-                <TrendingUp className="h-4 w-4 mr-1" />
-                <span className="text-sm">+8%</span>
-              </div>
-            </div>
-            <Progress value={75} className="mt-2" />
-            <p className="text-xs text-gray-600 mt-1">Target: ₹200K</p>
-          </CardContent>
-        </Card>
-      </div>
+            <Card className="border-l-4 border-l-orange-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Avg. Deal Size</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center space-x-2">
+                  <div className="text-2xl font-bold text-orange-600">₹150K</div>
+                  <div className="flex items-center text-green-600">
+                    <TrendingUp className="h-4 w-4 mr-1" />
+                    <span className="text-sm">+8%</span>
+                  </div>
+                </div>
+                <Progress value={75} className="mt-2" />
+                <p className="text-xs text-gray-600 mt-1">Target: ₹200K</p>
+              </CardContent>
+            </Card>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* NBD Performance Tabs */}
       <Tabs defaultValue="pipeline" className="w-full">
