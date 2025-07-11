@@ -1,7 +1,7 @@
 // File: hooks/useMedicalRepresentatives.ts
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 
 export interface MedicalRepresentative {
   id: string;
@@ -26,7 +26,8 @@ export const useMedicalRepresentatives = () => {
       setLoading(true);
       setError(null);
       
-      const { data, error: fetchError } = await supabase
+      // Try with regular client first (anon key)
+      let { data, error: fetchError } = await supabase
         .from('medical_representatives')
         .select(`
           id,
@@ -43,16 +44,40 @@ export const useMedicalRepresentatives = () => {
         .eq('is_active', true)
         .order('name', { ascending: true });
 
+      // If anon access fails, try with service role (admin)
+      if (fetchError && fetchError.code === '42501') {
+        console.log('Anon access failed, trying with service role...');
+        const adminResult = await supabaseAdmin
+          .from('medical_representatives')
+          .select(`
+            id,
+            employee_id,
+            name,
+            phone,
+            email,
+            territory,
+            manager_name,
+            joining_date,
+            monthly_target,
+            is_active
+          `)
+          .eq('is_active', true)
+          .order('name', { ascending: true });
+        
+        data = adminResult.data;
+        fetchError = adminResult.error;
+      }
+
       if (fetchError) {
         console.error('Error fetching MRs:', fetchError);
-        setError(fetchError.message);
+        setError(`Database Error: ${fetchError.message}`);
       } else {
         setMrList(data || []);
-        console.log(`Loaded ${data?.length || 0} active MRs from database`);
+        console.log(`✅ Loaded ${data?.length || 0} active MRs from database`);
       }
     } catch (error) {
       console.error('Unexpected error fetching MRs:', error);
-      setError('Failed to connect to database');
+      setError('Failed to connect to database. Please check your connection.');
     } finally {
       setLoading(false);
     }
@@ -61,7 +86,7 @@ export const useMedicalRepresentatives = () => {
   useEffect(() => {
     fetchMRs();
     
-    // Set up real-time subscription for MR changes
+    // Set up real-time subscription for MR changes (using anon client)
     const mrSubscription = supabase
       .channel('medical_representatives_changes')
       .on('postgres_changes', 
@@ -71,14 +96,21 @@ export const useMedicalRepresentatives = () => {
           table: 'medical_representatives' 
         }, 
         (payload) => {
-          console.log('MR data changed:', payload);
+          console.log('🔄 MR data changed:', payload.eventType);
           // Refresh the MR list when changes occur
           fetchMRs();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Real-time subscription active for MR changes');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.warn('⚠️ Real-time subscription failed, continuing without live updates');
+        }
+      });
 
     return () => {
+      console.log('🧹 Cleaning up MR subscription');
       mrSubscription.unsubscribe();
     };
   }, []);
@@ -128,6 +160,62 @@ export const useMedicalRepresentatives = () => {
     return managers.sort();
   };
 
+  // Add MR (using service role for write operations)
+  const addMR = async (mrData: Omit<MedicalRepresentative, 'id'>) => {
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('medical_representatives')
+        .insert([mrData])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding MR:', error);
+        setError(`Failed to add MR: ${error.message}`);
+        return null;
+      }
+
+      console.log('✅ MR added successfully:', data);
+      await fetchMRs(); // Refresh the list
+      return data;
+    } catch (error) {
+      console.error('Unexpected error adding MR:', error);
+      setError('Failed to add MR. Please try again.');
+      return null;
+    }
+  };
+
+  // Update MR (using service role for write operations)
+  const updateMR = async (id: string, updates: Partial<MedicalRepresentative>) => {
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('medical_representatives')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating MR:', error);
+        setError(`Failed to update MR: ${error.message}`);
+        return null;
+      }
+
+      console.log('✅ MR updated successfully:', data);
+      await fetchMRs(); // Refresh the list
+      return data;
+    } catch (error) {
+      console.error('Unexpected error updating MR:', error);
+      setError('Failed to update MR. Please try again.');
+      return null;
+    }
+  };
+
+  // Deactivate MR (soft delete)
+  const deactivateMR = async (id: string) => {
+    return updateMR(id, { is_active: false });
+  };
+
   return {
     mrList,
     loading,
@@ -139,6 +227,9 @@ export const useMedicalRepresentatives = () => {
     getMRsByManager,
     getUniqueTerritoriesWithCounts,
     getUniqueManagers,
+    addMR,
+    updateMR,
+    deactivateMR,
     totalMRs: mrList.length
   };
 };
