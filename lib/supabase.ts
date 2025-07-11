@@ -2,21 +2,9 @@
 
 import { createClient } from "@supabase/supabase-js"
 
-// Environment variables validation
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-// Validate required environment variables
-if (!supabaseUrl) {
-  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
-}
-
-if (!supabaseAnonKey) {
-  throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable')
-}
-
-// Create the main client (anon key)
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
@@ -24,9 +12,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 })
 
-// Create admin client (service role key) - only if available
-export const supabaseAdmin = supabaseServiceRoleKey 
-  ? createClient(supabaseUrl, supabaseServiceRoleKey, {
+// Server-side client with service role key (optional)
+export const supabaseAdmin = process.env.SUPABASE_SERVICE_ROLE_KEY 
+  ? createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
@@ -34,22 +22,10 @@ export const supabaseAdmin = supabaseServiceRoleKey
     })
   : null
 
-// Helper function to check if admin client is available
-export const hasAdminAccess = () => {
-  return supabaseAdmin !== null
-}
-
 // Environment info for debugging
-export const supabaseConfig = {
+console.log('🔧 Supabase configured:', {
   url: supabaseUrl,
   hasAnonKey: !!supabaseAnonKey,
-  hasServiceRoleKey: !!supabaseServiceRoleKey,
-  environment: process.env.NODE_ENV || 'development',
-}
-
-console.log('🔧 Supabase Configuration:', {
-  url: supabaseUrl,
-  hasAnonKey: !!supabaseAnonKey,
-  hasServiceRoleKey: !!supabaseServiceRoleKey,
+  hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
   environment: process.env.NODE_ENV,
 })
