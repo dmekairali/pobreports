@@ -7,25 +7,35 @@ import { MonthlyPlanServiceV2 } from "@/lib/monthly-plan-service.v2"; // Ensure 
 
 export async function POST(request: NextRequest) {
   try {
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-    const monthlyPlanService = new MonthlyPlanServiceV2(supabase!, openai); // Pass Supabase client and OpenAI client
+    // Initialize OpenAI client
+    const openaiApiKey = process.env.OPENAI_API_KEY;
+    if (!openaiApiKey) {
+      throw new Error("OPENAI_API_KEY is not configured");
+    }
+    const openai = new OpenAI({ apiKey: openaiApiKey });
+
+    // Ensure Supabase client is available
+    if (!supabase) {
+      throw new Error("Supabase client is not available. Check configuration.");
+    }
+    const monthlyPlanService = new MonthlyPlanServiceV2(supabase, openai);
 
     const body = await request.json();
     const {
       mrName,
       month,
       year,
-      // territoryContext is no longer expected from client for 'generate'
-      action = "generate",
+      // territoryContext is no longer expected from client for 'generate' action
+      action = "generate", // Default action
       threadId = null,
       weekNumber = null,
       actualPerformance = null,
       revisionReason = null,
+      // monthlyPerformance might be used for 'monthly_review'
+      monthlyPerformance = null,
     } = body;
 
-    console.log(`🤖 API Route: Action: ${action} for ${mrName} - ${month}/${year}`);
+    console.log(`🤖 API Route: Action: ${action} for MR: ${mrName}, Month: ${month}, Year: ${year}`);
 
     const assistantId = process.env.OPENAI_ASSISTANT_ID;
     if (!assistantId) {
@@ -35,52 +45,66 @@ export async function POST(request: NextRequest) {
     let result;
     switch (action) {
       case "generate":
-        if (!mrName || !month || !year) {
-          throw new Error("mrName, month, and year are required for generate action.");
+        if (!mrName || typeof month !== 'number' || typeof year !== 'number') {
+          throw new Error("mrName, month, and year are required and must be correct types for 'generate' action.");
         }
-        // The service method now handles fetching territory context, AI call, and saving.
         result = await monthlyPlanService.generateMonthlyPlanForMR(mrName, month, year, assistantId);
-        // The result from the service should already be in the desired format { success, plan, thread_id, tokens_used, error? }
         break;
+
+      // --- Placeholder actions ---
+      // These sections need to be implemented or adapted to use MonthlyPlanServiceV2 if applicable,
+      // or continue using direct OpenAI calls if the service doesn't cover their specific logic yet.
+      // For now, they will throw "Not Implemented" errors.
       case "revise_weekly":
-        // TODO: Adapt this call if MonthlyPlanServiceV2 will handle revisions
-        // For now, keeping existing placeholder logic, but it needs an OpenAI instance.
-        result = await reviseWeeklyPlan(assistantId, threadId, weekNumber, actualPerformance, revisionReason, openai);
+        console.warn("Action 'revise_weekly' is not fully implemented with MonthlyPlanServiceV2 yet.");
+        // Example of how it might be called if a service method existed:
+        // if (!threadId || !weekNumber || !actualPerformance || !revisionReason) {
+        //   throw new Error("Missing parameters for revise_weekly action");
+        // }
+        // result = await monthlyPlanService.reviseWeeklyPlanInDb(threadId, weekNumber, actualPerformance, revisionReason, assistantId);
+        result = { success: false, error: "Weekly revision not implemented in V2 service yet." }; // Placeholder
+        // Temporary direct call for testing (REMOVE LATER or integrate into service)
+        // result = await oldReviseWeeklyPlan(assistantId, threadId, weekNumber, actualPerformance, revisionReason, openai);
         break;
       case "update_daily":
-        // TODO: Adapt for service
-        result = await updateDailyPlan(assistantId, threadId, actualPerformance, openai);
+        console.warn("Action 'update_daily' is not fully implemented with MonthlyPlanServiceV2 yet.");
+        // result = await monthlyPlanService.updateDailyPlanInDb(threadId, actualPerformance, assistantId);
+        result = { success: false, error: "Daily update not implemented in V2 service yet." }; // Placeholder
         break;
       case "monthly_review":
-        // TODO: Adapt for service
-        result = await monthlyReview(assistantId, threadId, actualPerformance, openai);
+        console.warn("Action 'monthly_review' is not fully implemented with MonthlyPlanServiceV2 yet.");
+        // result = await monthlyPlanService.generateMonthlyReview(threadId, monthlyPerformance, assistantId);
+        result = { success: false, error: "Monthly review not implemented in V2 service yet." }; // Placeholder
         break;
+
       default:
         throw new Error(`Unknown action: ${action}`);
     }
 
-    // If the service call itself failed (e.g., result.success === false), return its error.
+    // Check if the result from the service (or other actions) indicates failure
     if (result && result.success === false) {
       return NextResponse.json({
         success: false,
-        error: result.error || 'Service call failed with no specific error message.',
+        error: result.error || 'Operation failed with no specific error message.',
+        action: action,
         timestamp: new Date().toISOString(),
       }, { status: 500 });
     }
 
-    // Otherwise, return the successful result from the service or other actions
+    // Return the successful result
     return NextResponse.json({
       success: true,
       ...result, // This will include plan, thread_id, tokens_used from generateMonthlyPlanForMR
-      action: action, // Ensure action is part of the response
+      action: action,
       timestamp: new Date().toISOString(),
     });
 
   } catch (error: any) {
-    console.error(`❌ API Route: Monthly planning failed:`, error);
+    console.error(`❌ API Route: Monthly planning process failed:`, error);
     return NextResponse.json({
       success: false,
-      error: error.message || 'Unknown error in API route',
+      error: error.message || 'Unknown error occurred in API route.',
+      action: request.method === 'POST' ? (await request.clone().json().catch(() => ({}))).action || 'unknown_action' : 'unknown_action',
       timestamp: new Date().toISOString(),
     }, { status: 500 });
   }
@@ -90,40 +114,25 @@ export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': '*', // Adjust in production
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization', // Add Authorization if you use it
     },
   });
 }
 
+// All old helper functions (generateInitialPlan, compressCustomerData, generateCompletePlan,
+// buildOptimizedPrompt, parseAIResponse, generateCustomerVisitSchedule,
+// generateAreaVisitSchedule, getVisitFrequency, calculateCustomerPriority,
+// generateWorkingDates, generateSummaryMetrics) are now removed from this file.
+// Their logic has been adapted and moved into the MonthlyPlanServiceV2 class.
 
-// Placeholder functions for actions not yet migrated to MonthlyPlanServiceV2
-// These would need the OpenAI client passed to them if they make direct AI calls.
-async function reviseWeeklyPlan(assistantId: string, threadId: string | null, weekNumber: number | null, actualPerformance: any, revisionReason: string | null, openai: OpenAI) {
-  if (!threadId || !weekNumber || !actualPerformance || !revisionReason) {
-    throw new Error("Missing parameters for revise_weekly action");
-  }
-  console.log("reviseWeeklyPlan called - not implemented in service yet");
-  // Placeholder: Call OpenAI directly or implement in service
-  throw new Error("Weekly revision not implemented yet - Phase 2");
-}
-
-async function updateDailyPlan(assistantId: string, threadId: string | null, actualPerformance: any, openai: OpenAI) {
-   if (!threadId || !actualPerformance) {
-    throw new Error("Missing parameters for update_daily action");
-  }
-  console.log("updateDailyPlan called - not implemented in service yet");
-  throw new Error("Daily update not implemented yet - Phase 2");
-}
-
-async function monthlyReview(assistantId: string, threadId: string | null, monthlyPerformance: any, openai: OpenAI) {
-  if (!threadId || !monthlyPerformance) {
-    throw new Error("Missing parameters for monthly_review action");
-  }
-  console.log("monthlyReview called - not implemented in service yet");
-  throw new Error("Monthly review not implemented yet - Phase 3");
-}
-
-// The original helper functions (generateInitialPlan, compressCustomerData, etc.)
-// are removed from here as their logic has been moved into MonthlyPlanServiceV2.
+// If you need to keep old placeholder functions for non-generate actions temporarily:
+// async function oldReviseWeeklyPlan(assistantId: string, threadId: string | null, weekNumber: number | null, actualPerformance: any, revisionReason: string | null, openai: OpenAI) {
+//   if (!threadId || !weekNumber || !actualPerformance || !revisionReason) {
+//     throw new Error("Missing parameters for revise_weekly action (old placeholder)");
+//   }
+//   console.log("oldReviseWeeklyPlan called - placeholder");
+//   throw new Error("Weekly revision (old placeholder) not implemented yet - Phase 2");
+// }
+// Similar for updateDailyPlan and monthlyReview if needed during transition.
