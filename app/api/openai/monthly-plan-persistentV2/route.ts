@@ -3,12 +3,13 @@
 import { type NextRequest, NextResponse } from "next/server"
 import OpenAI from "openai"
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
-
 export async function POST(request: NextRequest) {
   try {
+    // Initialize OpenAI client here to avoid client-side instantiation
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    })
+
     const body = await request.json()
     const {
       mrName,
@@ -33,16 +34,16 @@ export async function POST(request: NextRequest) {
     let result
     switch (action) {
       case "generate":
-        result = await generateInitialPlan(assistantId, mrName, month, year, territoryContext)
+        result = await generateInitialPlan(assistantId, mrName, month, year, territoryContext, openai)
         break
       case "revise_weekly":
-        result = await reviseWeeklyPlan(assistantId, threadId, weekNumber, actualPerformance, revisionReason)
+        result = await reviseWeeklyPlan(assistantId, threadId, weekNumber, actualPerformance, revisionReason, openai)
         break
       case "update_daily":
-        result = await updateDailyPlan(assistantId, threadId, actualPerformance)
+        result = await updateDailyPlan(assistantId, threadId, actualPerformance, openai)
         break
       case "monthly_review":
-        result = await monthlyReview(assistantId, threadId, actualPerformance)
+        result = await monthlyReview(assistantId, threadId, actualPerformance, openai)
         break
       default:
         throw new Error(`Unknown action: ${action}`)
@@ -86,6 +87,7 @@ async function generateInitialPlan(
   month: number,
   year: number,
   territoryContext: any,
+  openai: OpenAI,
 ) {
   console.log(`🆕 Creating new planning thread for ${mrName} with ${territoryContext.customers.length} customers`)
 
@@ -116,6 +118,7 @@ async function generateInitialPlan(
     year,
     compressedData,
     territoryContext,
+    openai,
   )
 
   // Generate customer visit schedule using algorithm
@@ -212,6 +215,7 @@ async function generateCompletePlan(
   year: number,
   compressedData: any,
   territoryContext: any,
+  openai: OpenAI,
 ) {
   console.log(`🤖 Generating complete AI plan for ${mrName}`)
 
@@ -523,14 +527,14 @@ function parseAIResponse(response: string) {
 }
 
 // Phase 2 & 3 placeholders
-async function reviseWeeklyPlan(assistantId: string, threadId: string, weekNumber: number, actualPerformance: any, revisionReason: string) {
+async function reviseWeeklyPlan(assistantId: string, threadId: string, weekNumber: number, actualPerformance: any, revisionReason: string, openai: OpenAI) {
   throw new Error("Weekly revision not implemented yet - Phase 2")
 }
 
-async function updateDailyPlan(assistantId: string, threadId: string, actualPerformance: any) {
+async function updateDailyPlan(assistantId: string, threadId: string, actualPerformance: any, openai: OpenAI) {
   throw new Error("Daily update not implemented yet - Phase 2")
 }
 
-async function monthlyReview(assistantId: string, threadId: string, monthlyPerformance: any) {
+async function monthlyReview(assistantId: string, threadId: string, monthlyPerformance: any, openai: OpenAI) {
   throw new Error("Monthly review not implemented yet - Phase 3")
 }
