@@ -8,27 +8,38 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Brain, Calendar, Users, Target, TrendingUp, MapPin, AlertCircle, Loader2, RefreshCw } from "lucide-react"
 import { useMonthlyPlanning } from "@/hooks/use-monthly-planning"
+import { useMedicalRepresentatives, type MedicalRepresentative } from "@/hooks/useMedicalRepresentatives"
+import { LiveMRFilterHeader } from "@/components/live-mr-filter-header"
 import { generateSampleCustomers, PlanUtils } from "@/lib/monthly-planning-api"
 
-export function AIMonthlyPlanner() {
+export function UpdatedAIMonthlyPlanner() {
   const { plan, isLoading, error, threadId, generatePlan, clearError, resetPlan } = useMonthlyPlanning()
+  const { mrList, loading: mrLoading, error: mrError } = useMedicalRepresentatives()
 
-  const [selectedMR, setSelectedMR] = useState("Rajesh Kumar")
+  const [selectedMR, setSelectedMR] = useState<MedicalRepresentative | null>(null)
+  const [selectedTerritory, setSelectedTerritory] = useState("all")
+  const [selectedPeriod, setSelectedPeriod] = useState("current")
   const [selectedMonth, setSelectedMonth] = useState(1) // January
   const [selectedYear, setSelectedYear] = useState(2025)
 
   const handleGeneratePlan = async () => {
+    if (!selectedMR) {
+      alert("Please select a Medical Representative first")
+      return
+    }
+
+    // Generate sample customers based on selected MR's territory
     const customers = generateSampleCustomers()
 
     const request = {
-      mrName: selectedMR,
+      mrName: selectedMR.name,
       month: selectedMonth,
       year: selectedYear,
       territoryContext: {
         customers,
         previous_performance: {
           total_visits: 380,
-          total_revenue: 2850000,
+          total_revenue: selectedMR.monthly_target * 0.85, // 85% of target as previous performance
         },
       },
       action: "generate" as const,
@@ -37,23 +48,42 @@ export function AIMonthlyPlanner() {
     await generatePlan(request)
   }
 
+  const getPeriodDates = () => {
+    const now = new Date()
+    switch (selectedPeriod) {
+      case "current":
+        return { month: now.getMonth() + 1, year: now.getFullYear() }
+      case "next":
+        const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+        return { month: nextMonth.getMonth() + 1, year: nextMonth.getFullYear() }
+      case "previous":
+        const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+        return { month: prevMonth.getMonth() + 1, year: prevMonth.getFullYear() }
+      case "quarter":
+        return { month: now.getMonth() + 1, year: now.getFullYear() }
+      default:
+        return { month: selectedMonth, year: selectedYear }
+    }
+  }
+
+  const periodDates = getPeriodDates()
   const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
   ]
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
+      {/* Live MR Filter Header */}
+      <LiveMRFilterHeader
+        selectedMR={selectedMR}
+        selectedTerritory={selectedTerritory}
+        selectedPeriod={selectedPeriod}
+        onMRChange={setSelectedMR}
+        onTerritoryChange={setSelectedTerritory}
+        onPeriodChange={setSelectedPeriod}
+      />
+
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -73,7 +103,16 @@ export function AIMonthlyPlanner() {
         </div>
       </div>
 
-      {/* Error Alert */}
+      {/* Error Alerts */}
+      {mrError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Database Error: {mrError}
+          </AlertDescription>
+        </Alert>
+      )}
+
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -96,26 +135,42 @@ export function AIMonthlyPlanner() {
           <CardDescription>Create an AI-powered comprehensive monthly tour plan</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm font-medium">Medical Representative</label>
-              <select
-                value={selectedMR}
-                onChange={(e) => setSelectedMR(e.target.value)}
-                className="w-full mt-1 p-2 border rounded-md"
-                disabled={isLoading}
-              >
-                <option value="Rajesh Kumar">Rajesh Kumar</option>
-                <option value="Priya Sharma">Priya Sharma</option>
-                <option value="Amit Patel">Amit Patel</option>
-              </select>
+          {/* Selected MR Summary */}
+          {selectedMR && (
+            <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-blue-900">{selectedMR.name}</h3>
+                  <p className="text-sm text-blue-700">
+                    {selectedMR.territory} • Target: ₹{(selectedMR.monthly_target / 100000).toFixed(1)}L
+                  </p>
+                  <p className="text-xs text-blue-600">
+                    Manager: {selectedMR.manager_name} • ID: {selectedMR.employee_id}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm text-blue-700">
+                    Plan for: {monthNames[periodDates.month - 1]} {periodDates.year}
+                  </div>
+                  <div className="text-xs text-blue-600">
+                    Period: {selectedPeriod === "current" ? "Current Month" : 
+                             selectedPeriod === "next" ? "Next Month" : 
+                             selectedPeriod === "previous" ? "Previous Month" : 
+                             "This Quarter"}
+                  </div>
+                </div>
+              </div>
             </div>
+          )}
+
+          {/* Manual Period Override */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium">Month</label>
+              <label className="text-sm font-medium text-gray-700">Override Month</label>
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(Number.parseInt(e.target.value))}
-                className="w-full mt-1 p-2 border rounded-md"
+                className="w-full mt-1 p-2 border rounded-md bg-white"
                 disabled={isLoading}
               >
                 {monthNames.map((month, index) => (
@@ -126,11 +181,11 @@ export function AIMonthlyPlanner() {
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium">Year</label>
+              <label className="text-sm font-medium text-gray-700">Override Year</label>
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(Number.parseInt(e.target.value))}
-                className="w-full mt-1 p-2 border rounded-md"
+                className="w-full mt-1 p-2 border rounded-md bg-white"
                 disabled={isLoading}
               >
                 <option value={2024}>2024</option>
@@ -140,19 +195,55 @@ export function AIMonthlyPlanner() {
             </div>
           </div>
 
-          <Button onClick={handleGeneratePlan} disabled={isLoading} className="w-full">
+          <Button 
+            onClick={handleGeneratePlan} 
+            disabled={isLoading || mrLoading || !selectedMR} 
+            className="w-full"
+          >
             {isLoading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Generating AI Plan...
+                Generating AI Plan for {selectedMR?.name}...
+              </>
+            ) : !selectedMR ? (
+              <>
+                <AlertCircle className="h-4 w-4 mr-2" />
+                Select an MR to Generate Plan
               </>
             ) : (
               <>
                 <Brain className="h-4 w-4 mr-2" />
-                Generate Monthly Plan
+                Generate Monthly Plan for {selectedMR.name}
               </>
             )}
           </Button>
+
+          {/* Territory Statistics */}
+          {selectedMR && !mrLoading && (
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Territory Context</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                <div>
+                  <span className="text-gray-600">Territory:</span>
+                  <span className="font-medium ml-1">{selectedMR.territory}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Target:</span>
+                  <span className="font-medium ml-1 text-green-600">₹{(selectedMR.monthly_target / 100000).toFixed(1)}L</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Joining Date:</span>
+                  <span className="font-medium ml-1">{new Date(selectedMR.joining_date).toLocaleDateString()}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Experience:</span>
+                  <span className="font-medium ml-1">
+                    {Math.floor((Date.now() - new Date(selectedMR.joining_date).getTime()) / (1000 * 60 * 60 * 24 * 365))} years
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -177,7 +268,14 @@ export function AIMonthlyPlanner() {
                       {monthNames[plan.mo.m - 1]} {plan.mo.y} - {plan.mo.mr}
                     </span>
                   </div>
-                  <Badge className="bg-blue-100 text-blue-800">AI Generated</Badge>
+                  <div className="flex items-center space-x-2">
+                    <Badge className="bg-blue-100 text-blue-800">AI Generated</Badge>
+                    {selectedMR && (
+                      <Badge variant="outline" className="bg-green-50 text-green-700">
+                        Target: ₹{(selectedMR.monthly_target / 100000).toFixed(1)}L
+                      </Badge>
+                    )}
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -189,6 +287,11 @@ export function AIMonthlyPlanner() {
                   <div className="text-center">
                     <div className="text-2xl font-bold text-green-600">₹{(plan.mo.tr / 100000).toFixed(1)}L</div>
                     <div className="text-sm text-gray-600">Target Revenue</div>
+                    {selectedMR && (
+                      <div className="text-xs text-gray-500">
+                        {((plan.mo.tr / selectedMR.monthly_target) * 100).toFixed(0)}% of target
+                      </div>
+                    )}
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-purple-600">{plan.mo.wd}</div>
@@ -201,6 +304,42 @@ export function AIMonthlyPlanner() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* MR Performance Context */}
+            {selectedMR && (
+              <Card className="border-green-200 bg-green-50">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2 text-green-800">
+                    <Users className="h-5 w-5" />
+                    <span>MR Performance Context</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center p-3 bg-white rounded-lg">
+                      <div className="text-lg font-bold text-green-600">
+                        ₹{(selectedMR.monthly_target / 100000).toFixed(1)}L
+                      </div>
+                      <div className="text-sm text-green-700">Monthly Target</div>
+                    </div>
+                    <div className="text-center p-3 bg-white rounded-lg">
+                      <div className="text-lg font-bold text-blue-600">{selectedMR.territory}</div>
+                      <div className="text-sm text-blue-700">Territory</div>
+                    </div>
+                    <div className="text-center p-3 bg-white rounded-lg">
+                      <div className="text-lg font-bold text-purple-600">{selectedMR.manager_name}</div>
+                      <div className="text-sm text-purple-700">Manager</div>
+                    </div>
+                    <div className="text-center p-3 bg-white rounded-lg">
+                      <div className="text-lg font-bold text-orange-600">
+                        {Math.floor((Date.now() - new Date(selectedMR.joining_date).getTime()) / (1000 * 60 * 60 * 24 * 365))}Y
+                      </div>
+                      <div className="text-sm text-orange-700">Experience</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Tier Distribution */}
             <Card>
@@ -390,7 +529,9 @@ export function AIMonthlyPlanner() {
                   <Calendar className="h-5 w-5 text-blue-600" />
                   <span>Customer Visit Schedule</span>
                 </CardTitle>
-                <CardDescription>Detailed visit dates for each customer</CardDescription>
+                <CardDescription>
+                  Detailed visit dates for {selectedMR?.name} in {selectedMR?.territory}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4 max-h-96 overflow-y-auto">
@@ -420,7 +561,9 @@ export function AIMonthlyPlanner() {
                   <MapPin className="h-5 w-5 text-green-600" />
                   <span>Area Visit Schedule</span>
                 </CardTitle>
-                <CardDescription>Planned visit days for each area</CardDescription>
+                <CardDescription>
+                  Planned visit days for each area in {selectedMR?.territory}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -444,20 +587,24 @@ export function AIMonthlyPlanner() {
       )}
 
       {/* Plan Metadata */}
-      {plan && (
+      {plan && selectedMR && (
         <Card className="border-gray-200 bg-gray-50">
           <CardHeader>
             <CardTitle className="text-sm text-gray-700">Plan Metadata</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+              <div>
+                <div className="text-gray-600">Generated For</div>
+                <div className="font-medium">{selectedMR.name}</div>
+              </div>
+              <div>
+                <div className="text-gray-600">Territory</div>
+                <div className="font-medium">{selectedMR.territory}</div>
+              </div>
               <div>
                 <div className="text-gray-600">Generated</div>
                 <div className="font-medium">{new Date(plan.metadata.generated_at).toLocaleString()}</div>
-              </div>
-              <div>
-                <div className="text-gray-600">Version</div>
-                <div className="font-medium">{plan.metadata.plan_version}</div>
               </div>
               <div>
                 <div className="text-gray-600">Method</div>
