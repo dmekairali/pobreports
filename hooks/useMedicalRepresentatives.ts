@@ -1,7 +1,7 @@
 // File: hooks/useMedicalRepresentatives.ts
 
 import { useState, useEffect } from 'react';
-import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { supabase, supabaseAdmin, hasAdminAccess, supabaseConfig } from '@/lib/supabase';
 
 export interface MedicalRepresentative {
   id: string;
@@ -25,8 +25,16 @@ export const useMedicalRepresentatives = () => {
     try {
       setLoading(true);
       setError(null);
+
+      console.log('🔍 Fetching MRs with config:', supabaseConfig);
       
+      // Check if Supabase is properly configured
+      if (!supabaseConfig.hasAnonKey) {
+        throw new Error('Supabase anon key is not configured. Please check your environment variables.');
+      }
+
       // Try with regular client first (anon key)
+      console.log('📡 Attempting to fetch MRs with anon key...');
       let { data, error: fetchError } = await supabase
         .from('medical_representatives')
         .select(`
@@ -44,10 +52,15 @@ export const useMedicalRepresentatives = () => {
         .eq('is_active', true)
         .order('name', { ascending: true });
 
-      // If anon access fails, try with service role (admin)
-      if (fetchError && fetchError.code === '42501') {
-        console.log('Anon access failed, trying with service role...');
-        const adminResult = await supabaseAdmin
+      // If anon access fails and we have admin access, try with service role
+      if (fetchError && (fetchError.code === '42501' || fetchError.code === 'PGRST116')) {
+        console.log('⚠️ Anon access failed, trying with service role...');
+        
+        if (!hasAdminAccess()) {
+          throw new Error('Service role key not configured. Cannot access data with current permissions.');
+        }
+
+        const adminResult = await supabaseAdmin!
           .from('medical_representatives')
           .select(`
             id,
@@ -66,25 +79,43 @@ export const useMedicalRepresentatives = () => {
         
         data = adminResult.data;
         fetchError = adminResult.error;
+        console.log('🔐 Using service role for data access');
       }
 
       if (fetchError) {
-        console.error('Error fetching MRs:', fetchError);
-        setError(`Database Error: ${fetchError.message}`);
+        console.error('❌ Error fetching MRs:', fetchError);
+        const errorMessage = `Database Error: ${fetchError.message}`;
+        
+        // Provide helpful error messages for common issues
+        if (fetchError.code === 'PGRST116') {
+          setError('Table "medical_representatives" not found. Please check your database schema.');
+        } else if (fetchError.code === '42501') {
+          setError('Access denied. Please check your database permissions or RLS policies.');
+        } else {
+          setError(errorMessage);
+        }
       } else {
         setMrList(data || []);
         console.log(`✅ Loaded ${data?.length || 0} active MRs from database`);
       }
     } catch (error) {
-      console.error('Unexpected error fetching MRs:', error);
-      setError('Failed to connect to database. Please check your connection.');
+      console.error('💥 Unexpected error fetching MRs:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setError(`Connection Error: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchMRs();
+    // Only try to fetch if we have proper configuration
+    if (supabaseConfig.hasAnonKey) {
+      fetchMRs();
+    } else {
+      setLoading(false);
+      setError('Supabase configuration missing. Please check your environment variables.');
+      return;
+    }
     
     // Set up real-time subscription for MR changes (using anon client)
     const mrSubscription = supabase
@@ -163,7 +194,12 @@ export const useMedicalRepresentatives = () => {
   // Add MR (using service role for write operations)
   const addMR = async (mrData: Omit<MedicalRepresentative, 'id'>) => {
     try {
-      const { data, error } = await supabaseAdmin
+      if (!hasAdminAccess()) {
+        setError('Service role access required for adding MRs. Please configure SUPABASE_SERVICE_ROLE_KEY.');
+        return null;
+      }
+
+      const { data, error } = await supabaseAdmin!
         .from('medical_representatives')
         .insert([mrData])
         .select()
@@ -188,7 +224,12 @@ export const useMedicalRepresentatives = () => {
   // Update MR (using service role for write operations)
   const updateMR = async (id: string, updates: Partial<MedicalRepresentative>) => {
     try {
-      const { data, error } = await supabaseAdmin
+      if (!hasAdminAccess()) {
+        setError('Service role access required for updating MRs. Please configure SUPABASE_SERVICE_ROLE_KEY.');
+        return null;
+      }
+
+      const { data, error } = await supabaseAdmin!
         .from('medical_representatives')
         .update(updates)
         .eq('id', id)
@@ -230,6 +271,9 @@ export const useMedicalRepresentatives = () => {
     addMR,
     updateMR,
     deactivateMR,
-    totalMRs: mrList.length
+    totalMRs: mrList.length,
+    // Configuration info for debugging
+    config: supabaseConfig,
+    hasAdminAccess: hasAdminAccess(),
   };
 };
