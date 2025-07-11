@@ -2,7 +2,7 @@
 
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -20,7 +20,7 @@ interface MRFilterHeaderProps {
 }
 
 export function LiveMRFilterHeader({
-  selectedMR,
+  selectedMR = null,
   selectedTerritory = "all",
   selectedPeriod = "current",
   onMRChange,
@@ -34,8 +34,8 @@ export function LiveMRFilterHeader({
 
   // Auto-select first MR if none selected and data is loaded
   useEffect(() => {
-    if (!selectedMR && mrList.length > 0 && !loading) {
-      onMRChange?.(mrList[0])
+    if (!selectedMR && mrList.length > 0 && !loading && onMRChange) {
+      onMRChange(mrList[0])
     }
   }, [mrList, selectedMR, loading, onMRChange])
 
@@ -45,24 +45,51 @@ export function LiveMRFilterHeader({
     mr.employee_id.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const handleMRSelect = (mr: MedicalRepresentative) => {
-    onMRChange?.(mr)
+  const handleMRSelect = useCallback((mr: MedicalRepresentative) => {
+    if (onMRChange) {
+      onMRChange(mr)
+    }
     setShowMRDropdown(false)
     setSearchTerm("")
-  }
+  }, [onMRChange])
 
-  const handleTerritorySelect = (territory: string) => {
-    onTerritoryChange?.(territory)
-    setShowTerritoryDropdown(false)
-  }
-
-  const clearAllFilters = () => {
-    if (mrList.length > 0) {
-      onMRChange?.(mrList[0])
+  const handleTerritorySelect = useCallback((territory: string) => {
+    if (onTerritoryChange) {
+      onTerritoryChange(territory)
     }
-    onTerritoryChange?.("all")
-    onPeriodChange?.("current")
-  }
+    setShowTerritoryDropdown(false)
+  }, [onTerritoryChange])
+
+  const clearAllFilters = useCallback(() => {
+    if (mrList.length > 0 && onMRChange) {
+      onMRChange(mrList[0])
+    }
+    if (onTerritoryChange) {
+      onTerritoryChange("all")
+    }
+    if (onPeriodChange) {
+      onPeriodChange("current")
+    }
+  }, [mrList, onMRChange, onTerritoryChange, onPeriodChange])
+
+  const handlePeriodChange = useCallback((period: string) => {
+    if (onPeriodChange) {
+      onPeriodChange(period)
+    }
+  }, [onPeriodChange])
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowMRDropdown(false)
+      setShowTerritoryDropdown(false)
+    }
+
+    if (showMRDropdown || showTerritoryDropdown) {
+      document.addEventListener('click', handleClickOutside)
+      return () => document.removeEventListener('click', handleClickOutside)
+    }
+  }, [showMRDropdown, showTerritoryDropdown])
 
   if (error) {
     return (
@@ -92,12 +119,15 @@ export function LiveMRFilterHeader({
             <div className="relative">
               <Button
                 variant="outline"
-                onClick={() => setShowMRDropdown(!showMRDropdown)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setShowMRDropdown(!showMRDropdown)
+                }}
                 disabled={loading}
-                className="flex items-center space-x-2 bg-white"
+                className="flex items-center space-x-2 bg-white min-w-[200px]"
               >
                 <User className="h-4 w-4 text-blue-600" />
-                <div className="text-left">
+                <div className="text-left flex-1">
                   {loading ? (
                     <div className="flex items-center space-x-2">
                       <Loader2 className="h-3 w-3 animate-spin" />
@@ -116,7 +146,10 @@ export function LiveMRFilterHeader({
               </Button>
 
               {showMRDropdown && !loading && (
-                <div className="absolute top-full left-0 mt-1 w-80 bg-white border rounded-lg shadow-lg z-50">
+                <div 
+                  className="absolute top-full left-0 mt-1 w-80 bg-white border rounded-lg shadow-lg z-50"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <div className="p-3 border-b">
                     <input
                       type="text"
@@ -169,7 +202,10 @@ export function LiveMRFilterHeader({
             <div className="relative">
               <Button
                 variant="outline"
-                onClick={() => setShowTerritoryDropdown(!showTerritoryDropdown)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setShowTerritoryDropdown(!showTerritoryDropdown)
+                }}
                 disabled={loading}
                 className="flex items-center space-x-2 bg-white"
               >
@@ -184,7 +220,10 @@ export function LiveMRFilterHeader({
               </Button>
 
               {showTerritoryDropdown && !loading && (
-                <div className="absolute top-full left-0 mt-1 w-64 bg-white border rounded-lg shadow-lg z-50">
+                <div 
+                  className="absolute top-full left-0 mt-1 w-64 bg-white border rounded-lg shadow-lg z-50"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <button
                     onClick={() => handleTerritorySelect("all")}
                     className="w-full p-3 text-left hover:bg-gray-50 border-b"
@@ -219,7 +258,7 @@ export function LiveMRFilterHeader({
               <Calendar className="h-4 w-4 text-blue-600" />
               <select
                 value={selectedPeriod}
-                onChange={(e) => onPeriodChange?.(e.target.value)}
+                onChange={(e) => handlePeriodChange(e.target.value)}
                 className="text-sm border rounded px-2 py-1 bg-white"
               >
                 <option value="current">Current Month</option>
@@ -254,7 +293,7 @@ export function LiveMRFilterHeader({
               <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                 {selectedMR.name}
                 <button 
-                  onClick={() => onMRChange?.(mrList[0])}
+                  onClick={() => mrList.length > 0 && onMRChange && onMRChange(mrList[0])}
                   className="ml-1 hover:bg-blue-200 rounded-full p-0.5"
                 >
                   <X className="h-3 w-3" />
@@ -265,7 +304,7 @@ export function LiveMRFilterHeader({
               <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                 {selectedTerritory}
                 <button 
-                  onClick={() => onTerritoryChange?.("all")}
+                  onClick={() => onTerritoryChange && onTerritoryChange("all")}
                   className="ml-1 hover:bg-blue-200 rounded-full p-0.5"
                 >
                   <X className="h-3 w-3" />
@@ -278,7 +317,7 @@ export function LiveMRFilterHeader({
                  selectedPeriod === "previous" ? "Previous Month" : 
                  selectedPeriod === "quarter" ? "This Quarter" : selectedPeriod}
                 <button 
-                  onClick={() => onPeriodChange?.("current")}
+                  onClick={() => onPeriodChange && onPeriodChange("current")}
                   className="ml-1 hover:bg-blue-200 rounded-full p-0.5"
                 >
                   <X className="h-3 w-3" />
