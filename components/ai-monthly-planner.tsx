@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react" // Added useEffect
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -8,14 +8,30 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Brain, Calendar, Users, Target, TrendingUp, MapPin, AlertCircle, Loader2, RefreshCw } from "lucide-react"
 import { useMonthlyPlanning } from "@/hooks/use-monthly-planning"
+import { useMedicalRepresentatives } from "@/hooks/useMedicalRepresentatives" // Import the new hook
 import { generateSampleCustomers, PlanUtils } from "@/lib/monthly-planning-api"
 
 export function AIMonthlyPlanner() {
-  const { plan, isLoading, error, threadId, generatePlan, clearError, resetPlan } = useMonthlyPlanning()
+  const { plan, isLoading: isPlanLoading, error: planError, threadId, generatePlan, clearError: clearPlanError, resetPlan } = useMonthlyPlanning()
+  const { mrList, loading: mrLoading, error: mrError, refetch: refetchMRs } = useMedicalRepresentatives()
 
-  const [selectedMR, setSelectedMR] = useState("Rajesh Kumar")
+  const [selectedMR, setSelectedMR] = useState("") // Initialize with empty string
   const [selectedMonth, setSelectedMonth] = useState(1) // January
   const [selectedYear, setSelectedYear] = useState(2025)
+
+  useEffect(() => {
+    // Set selectedMR to the first MR in the list once data is loaded,
+    // but only if no MR is currently selected or if the selected MR is no longer in the list.
+    if (mrList.length > 0) {
+      const currentMRStillInList = mrList.some(mr => mr.name === selectedMR);
+      if (!selectedMR || !currentMRStillInList) {
+        setSelectedMR(mrList[0].name);
+      }
+    } else if (mrList.length === 0 && !mrLoading) {
+      // If list is empty and not loading, clear selectedMR
+      setSelectedMR("");
+    }
+  }, [mrList, selectedMR, mrLoading]);
 
   const handleGeneratePlan = async () => {
     const customers = generateSampleCustomers()
@@ -73,14 +89,27 @@ export function AIMonthlyPlanner() {
         </div>
       </div>
 
-      {/* Error Alert */}
-      {error && (
+      {/* Error Alert for Plan Generation */}
+      {planError && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="flex justify-between items-center">
-            {error}
-            <Button onClick={clearError} variant="ghost" size="sm">
+            Plan Generation Error: {planError}
+            <Button onClick={clearPlanError} variant="ghost" size="sm">
               Dismiss
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Error Alert for MR Loading */}
+      {mrError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="flex justify-between items-center">
+            MR Loading Error: {mrError}
+            <Button onClick={() => refetchMRs()} variant="outline" size="sm" className="ml-2">
+              Retry
             </Button>
           </AlertDescription>
         </Alert>
@@ -98,40 +127,48 @@ export function AIMonthlyPlanner() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="text-sm font-medium">Medical Representative</label>
+              <label htmlFor="mrSelect" className="text-sm font-medium">Medical Representative</label>
               <select
+                id="mrSelect"
                 value={selectedMR}
                 onChange={(e) => setSelectedMR(e.target.value)}
                 className="w-full mt-1 p-2 border rounded-md"
-                disabled={isLoading}
+                disabled={mrLoading || isPlanLoading || (!mrError && mrList.length === 0)}
               >
-                <option value="Rajesh Kumar">Rajesh Kumar</option>
-                <option value="Priya Sharma">Priya Sharma</option>
-                <option value="Amit Patel">Amit Patel</option>
+                {mrLoading && <option value="">Loading MRs...</option>}
+                {!mrLoading && mrList.length === 0 && !mrError && <option value="">No MRs found</option>}
+                {!mrLoading && mrError && <option value="">Error loading MRs - Retry above</option>}
+                {mrList.map((mr) => (
+                  <option key={mr.id} value={mr.name}>
+                    {mr.name}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium">Month</label>
+              <label htmlFor="monthSelect" className="text-sm font-medium">Month</label>
               <select
+                id="monthSelect"
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(Number.parseInt(e.target.value))}
                 className="w-full mt-1 p-2 border rounded-md"
-                disabled={isLoading}
+                disabled={isPlanLoading}
               >
                 {monthNames.map((month, index) => (
-                  <option key={index} value={index + 1}>
+                  <option key={index + 1} value={index + 1}>
                     {month}
                   </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium">Year</label>
+              <label htmlFor="yearSelect" className="text-sm font-medium">Year</label>
               <select
+                id="yearSelect"
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(Number.parseInt(e.target.value))}
                 className="w-full mt-1 p-2 border rounded-md"
-                disabled={isLoading}
+                disabled={isPlanLoading}
               >
                 <option value={2024}>2024</option>
                 <option value={2025}>2025</option>
@@ -140,8 +177,12 @@ export function AIMonthlyPlanner() {
             </div>
           </div>
 
-          <Button onClick={handleGeneratePlan} disabled={isLoading} className="w-full">
-            {isLoading ? (
+          <Button
+            onClick={handleGeneratePlan}
+            disabled={isPlanLoading || mrLoading || !selectedMR || !!mrError}
+            className="w-full"
+          >
+            {isPlanLoading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Generating AI Plan...
@@ -157,7 +198,7 @@ export function AIMonthlyPlanner() {
       </Card>
 
       {/* Plan Display */}
-      {plan && (
+      {plan && !planError && (
         <Tabs defaultValue="overview" className="w-full space-y-4">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -444,7 +485,7 @@ export function AIMonthlyPlanner() {
       )}
 
       {/* Plan Metadata */}
-      {plan && (
+      {plan && !planError && (
         <Card className="border-gray-200 bg-gray-50">
           <CardHeader>
             <CardTitle className="text-sm text-gray-700">Plan Metadata</CardTitle>
