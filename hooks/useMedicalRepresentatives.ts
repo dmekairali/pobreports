@@ -26,43 +26,25 @@ export const useMedicalRepresentatives = () => {
       setLoading(true);
       setError(null);
 
-      console.log('📡 Fetching MRs from Supabase...');
-      
       const { data, error: fetchError } = await supabase
         .from('medical_representatives')
-        .select(`
-          id,
-          employee_id,
-          name,
-          phone,
-          email,
-          territory,
-          manager_name,
-          joining_date,
-          monthly_target,
-          is_active
-        `)
+        .select('*')
         .eq('is_active', true)
         .order('name', { ascending: true });
 
       if (fetchError) {
-        console.error('❌ Error fetching MRs:', fetchError);
-        
-        // Provide helpful error messages for common issues
-        if (fetchError.code === 'PGRST116') {
-          setError('Database table not found. Please check your database setup.');
-        } else if (fetchError.code === '42501') {
-          setError('Access denied. Please check your database permissions.');
-        } else {
-          setError(`Database Error: ${fetchError.message}`);
-        }
+        console.error('Error fetching MRs:', fetchError);
+        setError(fetchError.message || 'Database error');
+        setMrList([]);
       } else {
-        setMrList(data || []);
-        console.log(`✅ Loaded ${data?.length || 0} active MRs`);
+        const validData = data || [];
+        setMrList(validData);
+        console.log(`Loaded ${validData.length} MRs`);
       }
     } catch (error) {
-      console.error('💥 Unexpected error:', error);
-      setError('Connection failed. Please check your internet connection.');
+      console.error('Fetch error:', error);
+      setError('Connection failed');
+      setMrList([]);
     } finally {
       setLoading(false);
     }
@@ -70,82 +52,35 @@ export const useMedicalRepresentatives = () => {
 
   useEffect(() => {
     fetchMRs();
-    
-    // Set up real-time subscription
-    const subscription = supabase
-      .channel('mr_changes')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'medical_representatives' 
-        }, 
-        (payload) => {
-          console.log('🔄 MR data changed:', payload.eventType);
-          fetchMRs();
-        }
-      )
-      .subscribe((status) => {
-        console.log('📡 Subscription status:', status);
-      });
-
-    return () => {
-      console.log('🧹 Cleaning up subscription');
-      subscription.unsubscribe();
-    };
   }, []);
 
-  // Helper functions
-  const getMRByName = (name: string) => {
-    return mrList.find(mr => mr.name === name);
-  };
-
-  const getMRByEmployeeId = (employeeId: string) => {
-    return mrList.find(mr => mr.employee_id === employeeId);
-  };
-
-  const getMRsByTerritory = (territory: string) => {
-    return mrList.filter(mr => 
-      mr.territory.toLowerCase().includes(territory.toLowerCase())
-    );
-  };
-
-  const getMRsByManager = (managerName: string) => {
-    return mrList.filter(mr => 
-      mr.manager_name && 
-      mr.manager_name.toLowerCase().includes(managerName.toLowerCase())
-    );
-  };
-
   const getUniqueTerritoriesWithCounts = () => {
+    if (!Array.isArray(mrList) || mrList.length === 0) {
+      return [];
+    }
+
     const territoryMap = new Map<string, number>();
+    
     mrList.forEach(mr => {
-      const territory = mr.territory;
-      territoryMap.set(territory, (territoryMap.get(territory) || 0) + 1);
+      if (mr && mr.territory) {
+        const territory = mr.territory;
+        territoryMap.set(territory, (territoryMap.get(territory) || 0) + 1);
+      }
     });
+    
     return Array.from(territoryMap.entries()).map(([territory, count]) => ({
       territory,
       count,
-      mrs: mrList.filter(mr => mr.territory === territory)
+      mrs: mrList.filter(mr => mr && mr.territory === territory)
     }));
   };
 
-  const getUniqueManagers = () => {
-    const managers = [...new Set(mrList.map(mr => mr.manager_name).filter(Boolean))];
-    return managers.sort();
-  };
-
   return {
-    mrList,
-    loading,
-    error,
+    mrList: mrList || [],
+    loading: Boolean(loading),
+    error: error || null,
     refetch: fetchMRs,
-    getMRByName,
-    getMRByEmployeeId,
-    getMRsByTerritory,
-    getMRsByManager,
     getUniqueTerritoriesWithCounts,
-    getUniqueManagers,
-    totalMRs: mrList.length,
+    totalMRs: Array.isArray(mrList) ? mrList.length : 0,
   };
 };
