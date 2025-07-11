@@ -1,5 +1,7 @@
+// File: hooks/useMedicalRepresentatives.ts
+
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 export interface MedicalRepresentative {
   id: string;
@@ -106,7 +108,7 @@ export const useMedicalRepresentatives = () => {
     );
   };
 
-  // Get unique territories
+  // Get unique territories with counts
   const getUniqueTerritoriesWithCounts = () => {
     const territoryMap = new Map<string, number>();
     mrList.forEach(mr => {
